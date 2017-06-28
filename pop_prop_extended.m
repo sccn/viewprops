@@ -308,9 +308,9 @@ if ~typecomp
     % dipplot
     if isfield(EEG, 'dipfit') && ~isempty(EEG.dipfit)
         try
-            rv1 = num2str(EEG.dipfit.model(chanorcomp).rv*100, '%.1f');
+            rv = num2str(EEG.dipfit.model(chanorcomp).rv*100, '%.1f');
         catch
-            rv1 = 'N/A';
+            rv = 'N/A';
         end
         dip_background = axes('Parent', fh, 'position', [0.41 0.1 0.1 0.1557*3+0.0109], ...
             'units', 'normalized', 'XLim', [0 1], 'Ylim', [0 1]);
@@ -381,9 +381,9 @@ if ~typecomp
                 / norm(EEG.dipfit.model(chanorcomp).momxyz(2,:));
             if dmr<1
                 dmr = 1/dmr; end
-            text(-50,-163,{['RV: ' rv2 '%']; ['DMR:' num2str(dmr,'%.1f')]})
+            text(-50,-173,{['RV: ' rv '%']; ['DMR:' num2str(dmr,'%.1f')]})
         else
-            text(-50,-163,['RV: ' rv1 '%'])
+            text(-50,-163,['RV: ' rv '%'])
         end
     end
 end
