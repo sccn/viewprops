@@ -46,7 +46,7 @@ if isempty(events)
     has_events = false;
 else
     has_events = true;
-    event_color_dict = unique({events.type}');
+    event_color_dict = unique(cellfun(@num2str, {events.type}','UniformOutput', 0));
     for it = 1:length(event_color_dict)
         if isscalar(event_color_dict{it})
             event_color_dict{it} = num2str(event_color_dict{it}); end
@@ -148,6 +148,7 @@ end
 if has_events
     event_latencies = [events.latency];
     for evnt = events(event_latencies >= xlims(1) & event_latencies <= xlims(2))
+        evnt.type = num2str(evnt.type);
         mark_event(evnt.latency, evnt.type, ...
             event_color_dict{strcmp(event_color_dict, evnt.type), 2}, '--')
     end
