@@ -26,7 +26,7 @@ if size(times, 1) == 1
     times = times'; end
 
 % examine and organize data
-data = squeeze(data);
+data = double(squeeze(data));
 if size(data, 1) == 1
     data = data';
     epoched = false;
