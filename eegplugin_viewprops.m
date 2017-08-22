@@ -8,8 +8,8 @@ end
 
 plotmenu = findobj(fig, 'tag', 'plot');
 uimenu( plotmenu, 'label', 'View extended channel properties', ...
-    'callback', 'pop_viewprops(EEG, 1);');
+    'callback', [try_string.no_check '[temp1, temp2, LASTCOM] = pop_viewprops(EEG, 1);' catch_strings.add_to_hist]);
 uimenu( plotmenu, 'label', 'View extended component properties', ...
-    'callback', 'pop_viewprops(EEG, 0);');
+    'callback', [try_string.no_check '[temp1, temp2, LASTCOM] = pop_viewprops(EEG, 0);' catch_strings.add_to_hist]);
 end
 

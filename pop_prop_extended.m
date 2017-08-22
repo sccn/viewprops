@@ -1,4 +1,4 @@
-function [fh, EEG] = pop_prop_extended(EEG, typecomp, chanorcomp, winhandle, spec_opt, erp_opt, scroll_event, varargin)
+function [fh, EEG, com] = pop_prop_extended(EEG, typecomp, chanorcomp, winhandle, spec_opt, erp_opt, scroll_event, varargin)
 % POP_PROP_EXTENDED See various common properties of an EEG channel or component
 %   Creates a figure containing a scalp topography or channel location,
 %   erpimage of the data, power spectral density creaty by spectopo(), a
@@ -41,8 +41,14 @@ if nargin < 1
 	help pop_prop_extended;
 	return;   
 end;
-if nargin < 4
+if nargin < 5
 	spec_opt = {};
+end;
+if nargin < 6
+	erp_opt = {};
+end;
+if nargin < 7
+	scroll_event = 1;
 end;
 if nargin == 1
 	typecomp = 1;    % defaults
@@ -57,7 +63,7 @@ if nargin == 9
     spec_opt = scroll_event;
     erp_opt = varargin{1};
     scroll_event = varargin{2};
-    clear varargin
+    varargin = {};
 end
 if typecomp == 0 && isempty(EEG.icaweights)
    error('No ICA weights recorded for this dataset -- first run ICA on it');
@@ -93,10 +99,14 @@ end
 % -------------------------------------
 if length(chanorcomp) > 1
     for index = chanorcomp
-        pop_prop_extended(EEG, typecomp, index, 0, spec_opt, erp_opt);  % call recursively for each chanorcomp
+        pop_prop_extended(EEG, typecomp, index, nan, spec_opt, erp_opt, scroll_event, varargin{:});  % call recursively for each chanorcomp
     end;
-% 	com = sprintf('pop_prop( %s, %d, [%s], NaN, %s);', inputname(1), ...
-%                   typecomp, int2str(chanorcomp), vararg2str( { spec_opt } ));
+	com = sprintf('pop_prop_extended( %s, %d, [%s], NaN, %s, %s, %d', inputname(1), ...
+                  typecomp, int2str(chanorcomp), vararg2str({spec_opt}), vararg2str({erp_opt}), scroll_event);
+    if ~isempty(varargin)
+        com = [com sprintf(', %s', vararg2str(varargin))];
+    end
+    com = [com ');'];
     return;
 end;
 
@@ -138,7 +148,7 @@ end
 datax = axes('Parent', fh, 'position',[0.3712 0.7389 0.5641 0.18],'units','normalized');
 scrollax = uicontrol('Parent', fh, 'Style', 'Slider', ...
     'Units', 'Normalized', 'Position', [0.3712 0.6389 0.5641 0.025]);
-if exist('scroll_event', 'var') && ~isempty(scroll_event) && ~scroll_event
+if ~scroll_event
     EEG.event = []; end
 if typecomp
     scroll(EEG.times, EEG.data(chanorcomp, :, :), 5, EEG.event, fh, datax, scrollax);
@@ -186,8 +196,6 @@ end
 
 % plot erpimage
 herp = axes('Parent', fh, 'position',[0.0643 0.1102 0.2421 0.3850],'units','normalized');
-if ~exist('erp_opt', 'var')
-    erp_opt = {}; end
 eeglab_options;
 if EEG.trials > 1 % epoched data
     axis(herp, 'off')
@@ -481,9 +489,19 @@ if ~isnan(winhandle)
 		set(hval, 'enable', 'off');
 	end;
 	
-	com = sprintf('pop_prop( %s, %d, %d, 0, %s);', inputname(1), typecomp, chanorcomp, vararg2str( { spec_opt } ) );
+	com = sprintf('pop_prop_extended( %s, %d, [%s], 0, %s, %s, %d', inputname(1), ...
+                  typecomp, int2str(chanorcomp), vararg2str({spec_opt}), vararg2str({erp_opt}), scroll_event);
+    if ~isempty(varargin)
+        com = [com sprintf(', %s', vararg2str(varargin))];
+    end
+    com = [com ');'];
 else
-	com = sprintf('pop_prop( %s, %d, %d, NaN, %s);', inputname(1), typecomp, chanorcomp, vararg2str( { spec_opt } ) );
+	com = sprintf('pop_prop_extended( %s, %d, [%s], NaN, %s, %s, %d', inputname(1), ...
+                  typecomp, int2str(chanorcomp), vararg2str({spec_opt}), vararg2str({erp_opt}), scroll_event);
+    if ~isempty(varargin)
+        com = [com sprintf(', %s', vararg2str(varargin))];
+    end
+    com = [com ');'];
 end;
 
 drawnow;
