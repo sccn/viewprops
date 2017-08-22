@@ -1,7 +1,7 @@
 function eegplugin_viewprops( fig, try_strings, catch_strings )
 %EEGLABPLUGIN_POP_PROP_EXTENDED Summary of this function goes here
 %   Detailed explanation goes here
-vers = '1.0';
+vers = '1.03';
 if nargin < 3
     error('eegplugin_viewprops requires 3 arguments');
 end
