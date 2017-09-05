@@ -85,15 +85,6 @@ if nargin == 2
     scroll_event     = result{4};
 end;
 
-% Defining path for system
-eeglabpath = which('eeglab.m');
-pathtmp = fileparts(eeglabpath);
-meshdatapath = fullfile(pathtmp,'plugins','dipfit2.3','standard_BEM','standard_vol.mat');
-mripath      = fullfile(pathtmp,'plugins','dipfit2.3','standard_BEM','standard_mri.mat');
-
-if  exist(meshdatapath,'file') ~=2 || exist(mripath,'file') ~=2
-    error('pop_prop_extended: dipfit extension not available');
-end
     
 % plotting several component properties
 % -------------------------------------
@@ -312,7 +303,13 @@ catch e
     text(0.1, 0.3, [ 'Error: no spectrum plotted' 10 ' make sure you have the ' 10 'signal processing toolbox']);
 end
 
-if ~typecomp
+% Defining path for system
+eeglabpath = which('eeglab.m');
+pathtmp = fileparts(eeglabpath);
+meshdatapath = fullfile(pathtmp,'plugins','dipfit2.3','standard_BEM','standard_vol.mat');
+mripath      = fullfile(pathtmp,'plugins','dipfit2.3','standard_BEM','standard_mri.mat');
+
+if ~typecomp && exist(meshdatapath,'file') == 2 && exist(mripath,'file') == 2
     % dipplot
     if isfield(EEG, 'dipfit') && ~isempty(EEG.dipfit)
         try
