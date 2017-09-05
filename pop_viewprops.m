@@ -554,3 +554,18 @@ function res = is_symbolic_lambda(x)
 % internal: a symbolic lambda function is one which generates expressions when invoked with arguments (this is what exp_symbol generates)
 res = isa(x,'function_handle') && ~isempty(regexp(char(x),'@\(varargin\)struct\(''head'',\{.*\},''parts'',\{varargin\}\)','once'));
 end
+
+function res = is_impure_expression(x)
+% an impure expression is a MATLAB structure with a .tracking.expression field
+res = isfield(x,'tracking') && isfield(x.tracking,'expression');
+end
+
+function res = is_dataset(x)
+% Determine whether some object is a data set.
+res = all(isfield(x,{'data','srate'}));
+end
+
+function res = has_canonical_representation(x)
+% determine whether an expression is represented as a struct with the fields 'head' and 'parts'.
+res = all(isfield(x,{'head','parts'}));
+end
