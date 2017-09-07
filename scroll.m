@@ -60,7 +60,7 @@ n_points = round(t_window * srate);
 n_points = min(numel(data), n_points);
 
 % initial hight (3std)
-v_scale = std(data(:)) * 5;
+v_scale = std(data(:)) * 5 + eps;
 
 % initial plot
 hline = plot(haxis, 1:n_points, data(1:n_points));
