@@ -56,9 +56,9 @@ if nargin < 3
                      'Spectral options (see spectopo() help):','Erpimage options (see erpimage() help):' ...
                      [' Draw events over scrolling ' fastif(typecomp,'channel','component') ' activity']};
     if typecomp
-        inistr       = { ['1:' int2str(length(EEG.chanlocs))] '''freqrange'', [2 80]' '' 1};
+        inistr       = { ['1:' int2str(length(EEG.chanlocs))] ['''freqrange'', [2 ' num2str(min(80, EEG.srate/2)) ']'] '' 1};
     else
-        inistr       = { ['1:' int2str(size(EEG.icawinv, 2))] '''freqrange'', [2 80]' '' 1};
+        inistr       = { ['1:' int2str(size(EEG.icawinv, 2))] ['''freqrange'', [2 ' num2str(min(80, EEG.srate/2)) ']'] '' 1};
     end
     stylestr     = {'edit', 'edit', 'edit', 'checkbox'};
     try

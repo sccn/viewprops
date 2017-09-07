@@ -175,8 +175,8 @@ if ~typecomp % TODO: check this is right SUBSAMPLE
         samp_ind = randperm(EEG.pnts*EEG.trials);
         samp_ind = samp_ind(1:n_samp);
     end
-    datavar = mean(var(EEG.data(:, samp_ind), [], 2));
-    projvar = mean(var(EEG.data(:, samp_ind) - ...
+    datavar = mean(var(EEG.data(EEG.icachansind, samp_ind), [], 2));
+    projvar = mean(var(EEG.data(EEG.icachansind, samp_ind) - ...
         EEG.icawinv(:, chanorcomp) * icaacttmp(1, samp_ind), [], 2));
     pvafval = 100 *(1 - projvar/ datavar);
     pvaf = num2str(pvafval, '%3.1f');
