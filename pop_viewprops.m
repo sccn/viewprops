@@ -78,7 +78,7 @@ if nargin < 3
     if length(chanorcomp) > PLOTPERFIG
         ButtonName=questdlg2(strvcat(['More than ' int2str(PLOTPERFIG) fastif(typecomp,' channels',' components') ' so'],...
             'this function will pop-up several windows'), 'Confirmation', 'Cancel', 'OK','OK');
-        if ~isempty( strcmpi(ButtonName, 'cancel')), return; end;
+        if  ~isempty( strmatch(lower(ButtonName), 'cancel')), return; end;
     end;
 
 end;
@@ -87,8 +87,11 @@ currentfigtag = ['selcomp' num2str(rand)]; % generate a random figure tag
 
 if length(chanorcomp) > PLOTPERFIG
     for index = 1:PLOTPERFIG:length(chanorcomp)
-        pop_viewprops(EEG, chanorcomp(index:min(length(chanorcomp),index+PLOTPERFIG-1)));
+        pop_viewprops(EEG, typecomp, chanorcomp(index:min(length(chanorcomp),index+PLOTPERFIG-1)));
     end;
+    com = sprintf('pop_viewprops( %s, %d, %s, %s, %s, %d )', ...
+        inputname(1), typecomp, hlp_tostring(chanorcomp), hlp_tostring(spec_opt), ...
+        hlp_tostring(erp_opt), scroll_event);
     return;
 end;
 
