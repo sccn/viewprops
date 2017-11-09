@@ -402,7 +402,7 @@ set(fh, 'color', BACKCOLOR, 'visible', 'on')
 % ---------------
 if ~exist('winhandle', 'var')
     winhandle = nan; end
-if ~isnan(winhandle)
+if isobject(winhandle) || ~isnan(winhandle)
 	COLREJ = '[1 0.6 0.6]';
 	COLACC = '[0.75 1 0.75]';
     bottom = 0.005;
