@@ -13,6 +13,8 @@
 %       spec_opt:  cell array of options which are passed to spectopo()
 %       erp_opt:  cell array of options which are passed to erpimage()
 %       scroll_event:  0 to hide events in scroll plot, 1 to show them
+%       classifier_name:  string indicating which component classifier to
+%           use (must match a field name in EEG.etc.ic_classification)
 %       fig: figure handle for the figure to use.
 %
 %   See also: pop_prop_extended()
@@ -37,7 +39,7 @@
 
 % 01-25-02 reformated help & license -ad 
 
-function [com] = pop_viewprops( EEG, typecomp, chanorcomp, spec_opt, erp_opt, scroll_event, fig)
+function [com] = pop_viewprops( EEG, typecomp, chanorcomp, spec_opt, erp_opt, scroll_event, classifier_name, fig)
 
 COLACC = [0.75 1 0.75];
 PLOTPERFIG = 35;
@@ -61,6 +63,18 @@ if nargin < 3
         inistr       = { ['1:' int2str(size(EEG.icawinv, 2))] ['''freqrange'', [2 ' num2str(min(80, EEG.srate/2)) ']'] '' 1};
     end
     stylestr     = {'edit', 'edit', 'edit', 'checkbox'};
+    
+    % labels when available
+    if ~typecomp && isfield(EEG.etc, 'ic_classification')
+        classifiers = fieldnames(EEG.etc.ic_classification);
+        if ~isempty(classifiers)
+            iclabel_ind = find(strcmpi(classifiers, 'ICLabel'));
+            promptstr = [promptstr {classifiers}];
+            inistr = [inistr {fastif(isempty(iclabel_ind), 1, iclabel_ind)}];
+            stylestr = [stylestr {'popupmenu'}];
+        end
+    end
+    
     try
         result       = inputdlg3( 'prompt', promptstr,'style', stylestr, ...
             'default',  inistr, 'title', 'View many chan or comp. properties -- pop_viewprops');
@@ -74,6 +88,10 @@ if nargin < 3
     spec_opt     = eval( [ '{' result{2} '}' ] );
     erp_opt     = eval( [ '{' result{3} '}' ] );
     scroll_event     = result{4};
+    if ~typecomp && isfield(EEG.etc, 'ic_classification') && ~isempty(classifiers)
+        classifiers = fieldnames(EEG.etc.ic_classification);
+        classifier_name = classifiers{result{5}};
+    end
 
     if length(chanorcomp) > PLOTPERFIG
         ButtonName=questdlg2(strvcat(['More than ' int2str(PLOTPERFIG) fastif(typecomp,' channels',' components') ' so'],...
@@ -82,16 +100,25 @@ if nargin < 3
     end;
 
 end;
+if ~exist('spec_opt', 'var') || ~iscell(spec_opt)
+    spec_opt = {}; end
+if ~exist('erp_opt', 'var') || ~iscell(erp_opt)
+    erp_opt = {}; end
+if ~exist('scroll_event', 'var')
+    scroll_event = 1; end
+if ~exist('classifier_name', 'var')
+            classifier_name = ''; end
 fprintf('Drawing figure...\n');
 currentfigtag = ['selcomp' num2str(rand)]; % generate a random figure tag
 
 if length(chanorcomp) > PLOTPERFIG
     for index = 1:PLOTPERFIG:length(chanorcomp)
-        pop_viewprops(EEG, typecomp, chanorcomp(index:min(length(chanorcomp),index+PLOTPERFIG-1)));
+        pop_viewprops(EEG, typecomp, chanorcomp(index:min(length(chanorcomp),index+PLOTPERFIG-1)), ...
+            spec_opt, erp_opt, scroll_event, classifier_name);
     end;
-    com = sprintf('pop_viewprops( %s, %d, %s, %s, %s, %d )', ...
+    com = sprintf('pop_viewprops( %s, %d, %s, %s, %s, %d, ''%s'' )', ...
         inputname(1), typecomp, hlp_tostring(chanorcomp), hlp_tostring(spec_opt), ...
-        hlp_tostring(erp_opt), scroll_event);
+        hlp_tostring(erp_opt), scroll_event, classifier_name);
     return;
 end;
 
@@ -167,6 +194,24 @@ for ri = chanorcomp
                 topoplot( EEG.icawinv(:,ri), EEG.chanlocs, 'verbose', ...
                           'off', 'style' , 'fill','electrodes','off', 'chaninfo', EEG.chaninfo, 'numcontour', 8);
             end;
+            % labels
+            if ~typecomp && isfield(EEG.etc, 'ic_classification')
+                classifiers = fieldnames(EEG.etc.ic_classification);
+                if ~isempty(classifiers)
+                    if ~exist('classifier_name', 'var') || isempty(classifier_name)
+                        if any(strcmpi(classifiers, 'ICLabel'));
+                            classifier_name = 'ICLabel';
+                        else
+                            classifier_name = classifiers{1};
+                        end
+                    else
+                        classifier_name = classifiers{strcmpi(classifiers, classifier_name)};
+                    end
+                    [prob, classind] = max(EEG.etc.ic_classification.(classifier_name).classifications(ri, :));
+                    t = title([EEG.etc.ic_classification.(classifier_name).classes{classind} ': ' num2str(prob*100, '%.1f') '%']);
+                    set(t, 'Position', get(t, 'Position') .* [1 -1 1])
+                end
+            end
         end
 		axis square;
 
@@ -176,14 +221,8 @@ for ri = chanorcomp
              figure(findobj('tag', currentfigtag));
          end
 		button = uicontrol(gcf, 'Style', 'pushbutton', 'Units','Normalized', 'Position',...
-                           [X Y+sizewy sizewx sizewy*0.25].*s+q, 'tag', ['comp' num2str(ri)]);
-        if ~exist('spec_opt', 'var') || ~iscell(spec_opt)
-            spec_opt = {}; end
-        if ~exist('erp_opt', 'var') || ~iscell(erp_opt)
-            erp_opt = {}; end
-        if ~exist('scroll_event', 'var')
-            scroll_event = 1; end
-		set( button, 'callback', {@pop_prop_extended, EEG, typecomp, ri, NaN, spec_opt, erp_opt, scroll_event} );
+                           [X Y+sizewy sizewx sizewy*0.18].*s+q, 'tag', ['comp' num2str(ri)]);
+		set( button, 'callback', {@pop_prop_extended, EEG, typecomp, ri, NaN, spec_opt, erp_opt, scroll_event, classifier_name} );
 	end;
     if typecomp
         set( button, 'backgroundcolor', COLACC, 'string', EEG.chanlocs(ri).labels); 	
@@ -194,9 +233,9 @@ for ri = chanorcomp
 	count = count +1;
 end;
 
-com = sprintf('pop_viewprops( %s, %d, %s, %s, %s, %d )', ...
+com = sprintf('pop_viewprops( %s, %d, %s, %s, %s, %d, ''%s'' )', ...
     inputname(1), typecomp, hlp_tostring(chanorcomp), hlp_tostring(spec_opt), ...
-    hlp_tostring(erp_opt), scroll_event);
+    hlp_tostring(erp_opt), scroll_event, classifier_name);
 end
 
 

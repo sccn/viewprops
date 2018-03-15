@@ -1,4 +1,4 @@
-function [fh, EEG, com] = pop_prop_extended(EEG, typecomp, chanorcomp, winhandle, spec_opt, erp_opt, scroll_event, varargin)
+function [fh, EEG, com] = pop_prop_extended(EEG, typecomp, chanorcomp, winhandle, spec_opt, erp_opt, scroll_event, classifier_name, varargin)
 % POP_PROP_EXTENDED See various common properties of an EEG channel or component
 %   Creates a figure containing a scalp topography or channel location,
 %   erpimage of the data, power spectral density creaty by spectopo(), a
@@ -10,13 +10,15 @@ function [fh, EEG, com] = pop_prop_extended(EEG, typecomp, chanorcomp, winhandle
 %   (1) and the GUI will open.
 %
 %   Inputs
-%       EEG: EEGLAB EEG structure
+%       EEG:  EEGLAB EEG structure
 %       typecomp: 0 for component, 1 for channel
 %       chanorcomp:  channel or component index to plot
 %       winhandle:  pass NaN, used for compatability with component rejection
 %       spec_opt:  cell array of options which are passed to spectopo()
 %       erp_opt:  cell array of options which are passed to erpimage()
 %       scroll_event:  0 to hide events in scroll plot, 1 to show them
+%       classifier_name:  string indicating which component classifier to
+%           use (must match a field name in EEG.etc.ic_classification)
 %       varargin:  do not use this.
 %
 %   Outputs:
@@ -50,19 +52,33 @@ end;
 if nargin < 7
 	scroll_event = 1;
 end;
+if nargin < 8
+    classifier_name = '';
+    if ~typecomp && isfield(EEG.etc, 'ic_classification')
+        classifiers = fieldnames(EEG.etc.ic_classification);
+        if ~isempty(classifiers)
+            if any(strcmpi(classifiers, 'ICLabel'));
+                classifier_name = 'ICLabel';
+            else
+                classifier_name = classifiers{1};
+            end
+        end
+    end
+end;
 if nargin == 1
 	typecomp = 1;    % defaults
     chanorcomp = 1;
 end;
-if nargin == 9
+if nargin == 10
     % from callback
     EEG = chanorcomp;
     typecomp = winhandle;
     chanorcomp = spec_opt;
     winhandle = erp_opt;
     spec_opt = scroll_event;
-    erp_opt = varargin{1};
-    scroll_event = varargin{2};
+    erp_opt = classifier_name;
+    scroll_event = varargin{1};
+    classifier_name = varargin{2};
     varargin = {};
 end
 if typecomp == 0 && isempty(EEG.icaweights)
@@ -74,6 +90,17 @@ if nargin == 2
                      [' Draw events over scrolling ' fastif(typecomp,'channel','component') ' activity']};
 	inistr       = { '1' '''freqrange'', [2 80]' '', 1};
     stylestr     = {'edit', 'edit', 'edit', 'checkbox'};
+    % labels when available
+    if ~typecomp && isfield(EEG.etc, 'ic_classification')
+        classifiers = fieldnames(EEG.etc.ic_classification);
+        if ~isempty(classifiers)
+            iclabel_ind = find(strcmpi(classifiers, 'ICLabel'));
+            promptstr = [promptstr {classifiers}];
+            inistr = [inistr {fastif(isempty(iclabel_ind), 1, iclabel_ind)}];
+            stylestr = [stylestr {'popupmenu'}];
+        end
+    end
+        
 	result       = inputdlg3( 'prompt', promptstr,'style', stylestr, 'default',  inistr, ...
         'title', [fastif(typecomp,'Channel','Component') ' properties - pop_prop_extended()']);
 	if size( result, 1 ) == 0
@@ -82,7 +109,11 @@ if nargin == 2
 	chanorcomp   = eval( [ '[' result{1} ']' ] );
     spec_opt     = eval( [ '{' result{2} '}' ] );
     erp_opt     = eval( [ '{' result{3} '}' ] );
-    scroll_event     = result{4};
+    scroll_event   = result{4};
+    if ~typecomp && isfield(EEG.etc, 'ic_classification') && ~isempty(classifiers)
+        classifiers = fieldnames(EEG.etc.ic_classification);
+        classifier_name = classifiers{result{5}};
+    end
 end;
 
     
@@ -90,10 +121,10 @@ end;
 % -------------------------------------
 if length(chanorcomp) > 1
     for index = chanorcomp
-        pop_prop_extended(EEG, typecomp, index, nan, spec_opt, erp_opt, scroll_event, varargin{:});  % call recursively for each chanorcomp
+        pop_prop_extended(EEG, typecomp, index, nan, spec_opt, erp_opt, scroll_event, classifier_name, varargin{:});  % call recursively for each chanorcomp
     end;
-	com = sprintf('pop_prop_extended( %s, %d, [%s], NaN, %s, %s, %d', inputname(1), ...
-                  typecomp, int2str(chanorcomp), vararg2str({spec_opt}), vararg2str({erp_opt}), scroll_event);
+	com = sprintf('pop_prop_extended( %s, %d, [%s], NaN, %s, %s, %d, ''%s''', inputname(1), ...
+                  typecomp, int2str(chanorcomp), vararg2str({spec_opt}), vararg2str({erp_opt}), scroll_event, classifier_name);
     if ~isempty(varargin)
         com = [com sprintf(', %s', vararg2str(varargin))];
     end
@@ -114,7 +145,7 @@ end
 if typecomp
     basename = ['Channel ' EEG.chanlocs(chanorcomp).labels ];
 else
-    basename = ['Component ' int2str(chanorcomp) ];
+    basename = ['IC' int2str(chanorcomp) ];
 end
 fh = figure('name', [basename ' - pop_prop_extended()'],...
     'color', BACKCOLOR,...
@@ -135,23 +166,50 @@ if ~typecomp
     end
 end
 
+% check for labels. if they exist, shorten scroll and plot them
+if ~typecomp && isfield(EEG.etc, 'ic_classification') && ~isempty(classifier_name)
+    classifiers = fieldnames(EEG.etc.ic_classification);
+    classifier_name = classifiers{strcmpi(classifiers, classifier_name)};
+    [slabels, sind] = sort(EEG.etc.ic_classification.(classifier_name).classifications(chanorcomp, :), 'ascend');
+    labelax = axes('Parent', fh, 'Position', [0.32 0.6389 0.035 0.28]);
+    yoffset = 0.5;
+    xoffset = 0.01;
+    barh(slabels, 'y')
+    axis(labelax, [-xoffset, 1, 1 - yoffset, length(slabels) + yoffset])
+    set(labelax, 'YTickLabel', EEG.etc.ic_classification.(classifier_name).classes(sind), ...
+        'XGrid', 'on', 'XTick', 0:0.5:1)
+    xlabel 'Probability'
+    title(classifier_name)
+
+    for it = 1:length(sind)
+       text(0.5, it, sprintf('%.1f%%', slabels(it) * 100), ...
+           'fontsize', 13, 'HorizontalAlignment', 'center', ...
+           'Parent', labelax)
+    end
+
+    scroll_position = [0.4 0.7389 0.5929 0.18];
+else
+    scroll_position = [0.3712 0.7389 0.5641 0.18];
+end
+    
 % plot time series
-datax = axes('Parent', fh, 'position',[0.3712 0.7389 0.5641 0.18],'units','normalized');
+% datax = axes('Parent', fh, 'position',,'units','normalized');
+datax = axes('Parent', fh, 'Position',scroll_position,'units','normalized');
 scrollax = uicontrol('Parent', fh, 'Style', 'Slider', ...
-    'Units', 'Normalized', 'Position', [0.3712 0.6389 0.5641 0.025]);
+    'Units', 'Normalized', 'Position', [scroll_position(1) 0.6389 scroll_position(3) 0.025]);
 if ~scroll_event
     EEG.event = []; end
 if typecomp
-    scroll(EEG.times, EEG.data(chanorcomp, :, :), 5, EEG.event, fh, datax, scrollax);
+    scroll(EEG.times, single(EEG.data(chanorcomp, :, :)), 5, EEG.event, fh, datax, scrollax);
     tstitle_h = title('Channel Time Series', 'fontsize', 14, 'FontWeight', 'Normal');
 else
-    scroll(EEG.times, icaacttmp, 5, EEG.event, fh, datax, scrollax);
-    tstitle_h = title('Component Time Series', 'fontsize', 14, 'FontWeight', 'Normal');
+    scroll(EEG.times, single(icaacttmp), 5, EEG.event, fh, datax, scrollax);
+    tstitle_h = title(['Scrolling IC' int2str(chanorcomp) ' Activity'], 'fontsize', 14, 'FontWeight', 'Normal');
 end
-set(tstitle_h,'FontSize',14);
+set(tstitle_h,'FontSize',14, 'Position', get(tstitle_h, 'Position'));
 set(datax,'FontSize',12);
 xlabel(datax,'Time (ms)','fontsize', 14);
-ylabel(datax,'\muV');
+ylabel(datax,'uV');
 
 % plot scalp map
 axes('Parent', fh, 'position',[0.0143 0.6331 0.3121 0.3267],'units','normalized');
@@ -161,12 +219,12 @@ if typecomp
     title(['Channel ' EEG.chanlocs(chanorcomp).labels], 'fontsize', 14, 'FontWeight', 'Normal');
 else
     topoplot(EEG.icawinv(:,chanorcomp), EEG.chanlocs, 'chaninfo', EEG.chaninfo, ...
-        'shading', 'interp', 'numcontour', 0,'electrodes','on'); axis square;
-    title(['Component ' num2str(chanorcomp)], 'fontsize', 14, 'FontWeight', 'Normal');
+        'shading', 'interp', 'electrodes','on'); axis square;
+    title(['IC' num2str(chanorcomp)], 'fontsize', 14, 'FontWeight', 'Normal');
 end
 
-%  plot pvaf
-if ~typecomp % TODO: check this is right SUBSAMPLE
+% plot pvaf
+if ~typecomp
     maxsamp = 1e5;
     n_samp = min(maxsamp, EEG.pnts*EEG.trials);
     try
@@ -175,15 +233,31 @@ if ~typecomp % TODO: check this is right SUBSAMPLE
         samp_ind = randperm(EEG.pnts*EEG.trials);
         samp_ind = samp_ind(1:n_samp);
     end
-    datavar = mean(var(EEG.data(EEG.icachansind, samp_ind), [], 2));
-    projvar = mean(var(EEG.data(EEG.icachansind, samp_ind) - ...
+    if ~isempty(EEG.icachansind)
+        icachansind = EEG.icachansind;
+    else
+        icachansind = 1:EEG.nbchan;
+    end
+    datavar = mean(var(EEG.data(icachansind, samp_ind), [], 2));
+    projvar = mean(var(EEG.data(icachansind, samp_ind) - ...
         EEG.icawinv(:, chanorcomp) * icaacttmp(1, samp_ind), [], 2));
     pvafval = 100 *(1 - projvar/ datavar);
     pvaf = num2str(pvafval, '%3.1f');
 
-    text(0.5, -0.12, {'{\bfPercent Variance Accounted For}:'; [pvaf '%']}, ...
+    text(0.5, -0.12, {['{% scalp data var. accounted for}: ' pvaf '%']}, ...
         'fontsize', 13,'Units','Normalized', 'HorizontalAlignment', 'center');
 end
+
+% % plot labels
+% if ~typecomp && isfield(EEG.etc, 'ic_classification')
+%     classifier = classifiers{1}; % TODO: gui option for this
+%     [slabels, sind] = sort(EEG.etc.ic_classification.(classifier).classifications(chanorcomp, :), 'ascend');
+%     text(0.5, -0.2, sprintf('%s: %s %.1f%%, %s %.1f%%', classifier, ...
+%         EEG.etc.ic_classification.(classifier).classes{sind(end)}, 100 * slabels(end), ...
+%         EEG.etc.ic_classification.(classifier).classes{sind(end - 1)}, 100 * slabels(end - 1)), ...
+%         'fontsize', 13,'Units','Normalized', 'HorizontalAlignment', 'center');
+% end
+
 
 % plot erpimage
 herp = axes('Parent', fh, 'position',[0.0643 0.1102 0.2421 0.3850],'units','normalized');
@@ -210,7 +284,8 @@ if EEG.trials > 1 % epoched data
          [t1,t2,t3,t4,axhndls] = erpimage( icaacttmp-offset, ones(1,EEG.trials)*10000, EEG.times*1000, ...
                        '', ei_smooth, 1, 'caxis', 2/3, 'cbar','erp','erp_vltg_ticks',era_limits, erp_opt{:});   
     end;
-    title('Epoched Data', 'fontsize', 14, 'FontWeight', 'Normal');
+    title(['Epoched IC' int2str(chanorcomp) ' Activity'], 'fontsize', 14, 'FontWeight', 'Normal');
+    lab = text(1.27, .95,'RMS uV per scalp channel');
     
 else % continuoous data
     ERPIMAGELINES = 200; % show 200-line erpimage
@@ -247,6 +322,7 @@ else % continuoous data
             ylabel(axhndls(1), 'Data');
         end
         title('Continuous Data', 'fontsize', 14, 'FontWeight', 'Normal');
+        lab = text(1.27, .85,'RMS uV per scalp channel');
     else
         axis off;
         text(0.1, 0.3, [ 'No erpimage plotted' 10 'for small continuous data']);
@@ -277,8 +353,6 @@ catch
         set(get(axhndls(1), 'Xlabel'), 'FontSize', 14)
     end
 end
-
-lab = text(1.27,.85,'RMS \muVolts per channel');
 set(lab, 'rotation', -90, 'FontSize', 12)
 
 % plot spectrum
@@ -289,9 +363,9 @@ try
         title(hfreq,'Channel Activity Power Spectrum','units','normalized', 'fontsize', 14, 'FontWeight', 'Normal');
     else
         spectopo( icaacttmp(1, :), EEG.pnts, EEG.srate, 'mapnorm', EEG.icawinv(:,chanorcomp), spec_opt{:} );
-        title(hfreq,'Component Activity Power Spectrum','units','normalized', 'fontsize', 14, 'FontWeight', 'Normal');
+        title(hfreq,['IC' int2str(chanorcomp) ' Activity Power Spectrum'],'units','normalized', 'fontsize', 14, 'FontWeight', 'Normal');
     end
-	set(get(hfreq, 'ylabel'), 'string', 'Power 10*log_{10}(\muV^{2}/Hz)', 'fontsize', 14); 
+	set(get(hfreq, 'ylabel'), 'string', 'Power 10*log_{10}(uV^2/Hz)', 'fontsize', 14); 
 	set(get(hfreq, 'xlabel'), 'string', 'Frequency (Hz)', 'fontsize', 14, 'fontweight', 'normal'); 
 	set(hfreq, 'fontsize', 14, 'fontweight', 'normal'); 
     axis on tight;
@@ -486,15 +560,15 @@ if isobject(winhandle) || ~isnan(winhandle)
 		set(hval, 'enable', 'off');
 	end;
 	
-	com = sprintf('pop_prop_extended( %s, %d, [%s], 0, %s, %s, %d', inputname(1), ...
-                  typecomp, int2str(chanorcomp), vararg2str({spec_opt}), vararg2str({erp_opt}), scroll_event);
+	com = sprintf('pop_prop_extended( %s, %d, [%s], 0, %s, %s, %d, ''%s''', inputname(1), ...
+                  typecomp, int2str(chanorcomp), vararg2str({spec_opt}), vararg2str({erp_opt}), scroll_event, classifier_name);
     if ~isempty(varargin)
         com = [com sprintf(', %s', vararg2str(varargin))];
     end
     com = [com ');'];
 else
-	com = sprintf('pop_prop_extended( %s, %d, [%s], NaN, %s, %s, %d', inputname(1), ...
-                  typecomp, int2str(chanorcomp), vararg2str({spec_opt}), vararg2str({erp_opt}), scroll_event);
+	com = sprintf('pop_prop_extended( %s, %d, [%s], NaN, %s, %s, %d, ''%s''', inputname(1), ...
+                  typecomp, int2str(chanorcomp), vararg2str({spec_opt}), vararg2str({erp_opt}), scroll_event, classifier_name);
     if ~isempty(varargin)
         com = [com sprintf(', %s', vararg2str(varargin))];
     end
