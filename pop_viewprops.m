@@ -208,7 +208,9 @@ for ri = chanorcomp
                         classifier_name = classifiers{strcmpi(classifiers, classifier_name)};
                     end
                     [prob, classind] = max(EEG.etc.ic_classification.(classifier_name).classifications(ri, :));
-                    t = title([EEG.etc.ic_classification.(classifier_name).classes{classind} ': ' num2str(prob*100, '%.1f') '%']);
+                    t = title(sprintf('%s :       %.1f%%', ...
+                        EEG.etc.ic_classification.(classifier_name).classes{classind}, ...
+                        prob*100));
                     set(t, 'Position', get(t, 'Position') .* [1 -1 1])
                 end
             end

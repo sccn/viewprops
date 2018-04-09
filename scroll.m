@@ -26,7 +26,8 @@ if size(times, 1) == 1
     times = times'; end
 
 % examine and organize data
-data = double(squeeze(data));
+times = single(times);
+data = single(squeeze(data));
 if size(data, 1) == 1
     data = data';
     epoched = false;
@@ -60,7 +61,7 @@ n_points = round(t_window * srate);
 n_points = min(numel(data), n_points);
 
 % initial hight (3std)
-v_scale = std(data(:)) * 5 + eps;
+v_scale = double(std(data(:)) * 5 + eps);
 
 % initial plot
 hline = plot(haxis, 1:n_points, data(1:n_points));
@@ -70,12 +71,12 @@ if ~exist('hscroll', 'var') || isempty(hscroll)
     apos = get(haxis, 'Position');
     hscroll = uicontrol('Parent', hparent, 'Style', 'Slider', ...
         'Min', 1, 'Max', numel(data) - n_points + 1, 'Value', 1, ...
-        'SliderStep', [round(n_points/10), n_points] / numel(data), 'Units', 'Normalized', ...
+        'SliderStep', double([round(n_points/10), n_points] / numel(data)), 'Units', 'Normalized', ...
         'Position', [apos(1), apos(2) - 0.1, apos(3), 0.05], ...
         'Callback', @update_plot);
 else
     set(hscroll, 'Min', 1, 'Max', numel(data) - n_points + 1, ...
-        'Value', 1, 'SliderStep', [round(n_points/10), n_points] / numel(data), ...
+        'Value', 1, 'SliderStep', double([round(n_points/10), n_points]) / numel(data), ...
         'Callback', @update_plot);
 end
 
@@ -216,7 +217,8 @@ set(hObj, 'UserData', all_data);
 
 
     function mark_event(x, label, color, style)
-        if size(hdressings, 2) <= n_line
+        x = double(x);
+        if size(hdressings, 2) < n_line
             % make new markers
             hdressings(1, n_line) = line([x x], [-v_scale, v_scale], ...
                 'Color', color, 'Linestyle', style, 'Parent', haxis);

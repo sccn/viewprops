@@ -170,20 +170,20 @@ end
 if ~typecomp && isfield(EEG.etc, 'ic_classification') && ~isempty(classifier_name)
     classifiers = fieldnames(EEG.etc.ic_classification);
     classifier_name = classifiers{strcmpi(classifiers, classifier_name)};
-    [slabels, sind] = sort(EEG.etc.ic_classification.(classifier_name).classifications(chanorcomp, :), 'ascend');
+    nclass = length(EEG.etc.ic_classification.(classifier_name).classes);
     labelax = axes('Parent', fh, 'Position', [0.32 0.6389 0.035 0.28]);
     yoffset = 0.5;
     xoffset = 0.01;
-    barh(slabels, 'y')
-    axis(labelax, [-xoffset, 1, 1 - yoffset, length(slabels) + yoffset])
-    set(labelax, 'YTickLabel', EEG.etc.ic_classification.(classifier_name).classes(sind), ...
+    barh(EEG.etc.ic_classification.(classifier_name).classifications(chanorcomp, end:-1:1), 'y')
+    axis(labelax, [-xoffset, 1, 1 - yoffset, nclass + yoffset])
+    set(labelax, 'YTickLabel', EEG.etc.ic_classification.(classifier_name).classes(end:-1:1), ...
         'XGrid', 'on', 'XTick', 0:0.5:1)
     xlabel 'Probability'
     title(classifier_name)
 
-    for it = 1:length(sind)
-       text(0.5, it, sprintf('%.1f%%', slabels(it) * 100), ...
-           'fontsize', 13, 'HorizontalAlignment', 'center', ...
+    for it = 1:nclass
+       text(0.5, it, sprintf('%.1f%%', EEG.etc.ic_classification.(classifier_name).classifications(chanorcomp, end - it + 1) * 100), ...
+           'fontsize', 11, 'HorizontalAlignment', 'center', ...
            'Parent', labelax)
     end
 
@@ -206,7 +206,7 @@ else
     scroll(EEG.times, single(icaacttmp), 5, EEG.event, fh, datax, scrollax);
     tstitle_h = title(['Scrolling IC' int2str(chanorcomp) ' Activity'], 'fontsize', 14, 'FontWeight', 'Normal');
 end
-set(tstitle_h,'FontSize',14, 'Position', get(tstitle_h, 'Position'));
+set(tstitle_h,'FontSize',14, 'Position', get(tstitle_h, 'Position'), 'units', 'normalized');
 set(datax,'FontSize',12);
 xlabel(datax,'Time (ms)','fontsize', 14);
 ylabel(datax,'uV');
@@ -723,5 +723,9 @@ for index = 1:length(opt.prompt)
 end;
 
 [tmpresult, userdat, strhalt, resstruct] = inputgui('uilist', uilist,'geometry', uigeometry, addopts{:});
-result = cell(1,length(opt.prompt));
-result(find(outputind)) = tmpresult;
+try
+    result = cell(1,length(opt.prompt));
+    result(find(outputind)) = tmpresult;
+catch
+    result = [];
+end
