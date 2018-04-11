@@ -170,6 +170,10 @@ end
 if ~typecomp && isfield(EEG.etc, 'ic_classification') && ~isempty(classifier_name)
     classifiers = fieldnames(EEG.etc.ic_classification);
     classifier_name = classifiers{strcmpi(classifiers, classifier_name)};
+    if size(EEG.etc.ic_classification.(classifier_name).classifications, 1) ...
+            ~= size(EEG.icawinv, 2)
+        warning(['The number of ICs do not match the number of IC classifications. This will result in incorrectly plotted labels. Please rerun ' classifier_name])
+    end
     nclass = length(EEG.etc.ic_classification.(classifier_name).classes);
     labelax = axes('Parent', fh, 'Position', [0.32 0.6389 0.035 0.28]);
     yoffset = 0.5;
@@ -218,8 +222,8 @@ if typecomp
              'electrodes','off', 'style', 'blank', 'emarkersize1chan', 12); axis square;
     title(['Channel ' EEG.chanlocs(chanorcomp).labels], 'fontsize', 14, 'FontWeight', 'Normal');
 else
-    topoplot(EEG.icawinv(:,chanorcomp), EEG.chanlocs, 'chaninfo', EEG.chaninfo, ...
-        'shading', 'interp', 'electrodes','on'); axis square;
+    topoplot(EEG.icawinv(:,chanorcomp), EEG.chanlocs, ...
+        'chaninfo', EEG.chaninfo, 'electrodes','on'); axis square;
     title(['IC' num2str(chanorcomp)], 'fontsize', 14, 'FontWeight', 'Normal');
 end
 
@@ -329,31 +333,33 @@ else % continuoous data
     end
 end
 
-try
-    % 2014+
-    axhndls{1}.FontSize = 12;
-    axhndls{1}.YLabel.FontSize = 14;
-    set(axhndls{2},'position', get(axhndls{2},'position') - [0.01 0 0.02 0]);
+if exist('axhndls', 'var')
     try
-        axhndls{3}.FontSize = 12;
-        axhndls{3}.XLabel.FontSize = 14; %#ok<NASGU>
+        % 2014+
+        axhndls{1}.FontSize = 12;
+        axhndls{1}.YLabel.FontSize = 14;
+        set(axhndls{2},'position', get(axhndls{2},'position') - [0.01 0 0.02 0]);
+        try
+            axhndls{3}.FontSize = 12;
+            axhndls{3}.XLabel.FontSize = 14; %#ok<NASGU>
+        catch
+            axhndls{1}.XLabel.FontSize = 14; %#ok<NASGU>
+        end
     catch
-        axhndls{1}.XLabel.FontSize = 14; %#ok<NASGU>
+        % 2013-
+        set(axhndls(1), 'FontSize', 12)
+        set(get(axhndls(1), 'Ylabel'), 'FontSize', 14)
+        set(axhndls(2),'position', get(axhndls(2),'position') - [0.01 0 0.02 0], ...
+            'Fontsize', 12)
+        if ~isnan(axhndls(3))
+            set(axhndls(3), 'FontSize', 12)
+            set(get(axhndls(3), 'Xlabel'), 'FontSize', 14)
+        else
+            set(get(axhndls(1), 'Xlabel'), 'FontSize', 14)
+        end
     end
-catch
-    % 2013-
-    set(axhndls(1), 'FontSize', 12)
-    set(get(axhndls(1), 'Ylabel'), 'FontSize', 14)
-    set(axhndls(2),'position', get(axhndls(2),'position') - [0.01 0 0.02 0], ...
-        'Fontsize', 12)
-    if ~isnan(axhndls(3))
-        set(axhndls(3), 'FontSize', 12)
-        set(get(axhndls(3), 'Xlabel'), 'FontSize', 14)
-    else
-        set(get(axhndls(1), 'Xlabel'), 'FontSize', 14)
-    end
+    set(lab, 'rotation', -90, 'FontSize', 12)
 end
-set(lab, 'rotation', -90, 'FontSize', 12)
 
 % plot spectrum
 try

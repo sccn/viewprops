@@ -207,6 +207,10 @@ for ri = chanorcomp
                     else
                         classifier_name = classifiers{strcmpi(classifiers, classifier_name)};
                     end
+                    if ri == chanorcomp(1) && size(EEG.icawinv, 2) ...
+                            ~= size(EEG.etc.ic_classification.(classifier_name).classifications, 1)
+                        warning(['The number of ICs do not match the number of IC classifications. This will result in incorrectly plotted labels. Please rerun ' classifier_name])
+                    end
                     [prob, classind] = max(EEG.etc.ic_classification.(classifier_name).classifications(ri, :));
                     t = title(sprintf('%s :       %.1f%%', ...
                         EEG.etc.ic_classification.(classifier_name).classes{classind}, ...

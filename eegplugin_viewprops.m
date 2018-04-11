@@ -1,7 +1,7 @@
 function vers = eegplugin_viewprops( fig, try_strings, catch_strings )
 %EEGLABPLUGIN_POP_PROP_EXTENDED View extended channel/component properties
 %   Displays ERPimage, spectopo, topomap, activity scroll, dipole, and pvaf
-vers = 'ViewProps1.3';
+vers = 'ViewProps1.4';
 if nargin < 3
     error('eegplugin_viewprops requires 3 arguments');
 end

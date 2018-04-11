@@ -75,9 +75,17 @@ if ~exist('hscroll', 'var') || isempty(hscroll)
         'Position', [apos(1), apos(2) - 0.1, apos(3), 0.05], ...
         'Callback', @update_plot);
 else
-    set(hscroll, 'Min', 1, 'Max', numel(data) - n_points + 1, ...
-        'Value', 1, 'SliderStep', double([round(n_points/10), n_points]) / numel(data), ...
-        'Callback', @update_plot);
+    set(hscroll, 'Callback', @update_plot)
+    update_scroll(hscroll, n_points, numel(data))
+%     if n_points <= numel(data)
+%         set(hscroll, 'Min', 1, 'Max', 2, ...
+%             'Value', 1, 'SliderStep', double([round(n_points/10), n_points]) / numel(data), ...
+%             'Callback', @update_plot, 'Visible', 'off');
+%     else
+%         set(hscroll, 'Min', 1, 'Max', numel(data) - n_points + 1, ...
+%             'Value', 1, 'SliderStep', double([round(n_points/10), n_points]) / numel(data), ...
+%             'Callback', @update_plot, 'Visible', 'on');
+%     end
 end
 
 % save data
@@ -273,7 +281,7 @@ switch lower(event.Key)
         all_data.v_scale = all_data.v_scale*1.1;
     case 'rightarrow'
         % increase timerange
-        all_data.n_points = floor(all_data.n_points*1.1);
+        all_data.n_points = ceil(min(numel(all_data.data), all_data.n_points*1.1));
     case 'leftarrow'
         % decrease timerange
         all_data.n_points = ceil(all_data.n_points*0.9);
@@ -284,4 +292,16 @@ set(hscroll, 'UserData', all_data);
 
 % update plot
 update_plot(hscroll, [])
+end
+
+
+% update scroll bar
+function update_scroll(hscroll, n_points, n_data)
+if n_points <= n_data
+    set(hscroll, 'Min', 1, 'Max', 2, 'Visible', 'off', ...
+        'Value', 1, 'SliderStep', double([round(n_points/10), n_points]) / n_data);
+else
+    set(hscroll, 'Min', 1, 'Max', n_data - n_points + 1, 'Visible', 'on', ...
+        'Value', 1, 'SliderStep', double([round(n_points/10), n_points]) / n_data);
+end
 end
