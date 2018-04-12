@@ -292,12 +292,15 @@ set(hscroll, 'UserData', all_data);
 
 % update plot
 update_plot(hscroll, [])
+
+% update scrollbar
+update_scroll(hscroll, all_data.n_points, numel(all_data.data))
 end
 
 
 % update scroll bar
 function update_scroll(hscroll, n_points, n_data)
-if n_points <= n_data
+if n_points >= n_data
     set(hscroll, 'Min', 1, 'Max', 2, 'Visible', 'off', ...
         'Value', 1, 'SliderStep', double([round(n_points/10), n_points]) / n_data);
 else
