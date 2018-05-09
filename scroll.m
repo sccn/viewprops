@@ -305,6 +305,6 @@ if n_points >= n_data
         'Value', 1, 'SliderStep', double([round(n_points/10), n_points]) / n_data);
 else
     set(hscroll, 'Min', 1, 'Max', n_data - n_points + 1, 'Visible', 'on', ...
-        'Value', 1, 'SliderStep', double([round(n_points/10), n_points]) / n_data);
+        'SliderStep', double([round(n_points/10), n_points]) / n_data);
 end
 end
