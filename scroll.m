@@ -75,7 +75,7 @@ if ~exist('hscroll', 'var') || isempty(hscroll)
         'Position', [apos(1), apos(2) - 0.1, apos(3), 0.05], ...
         'Callback', @update_plot);
 else
-    set(hscroll, 'Callback', @update_plot)
+    set(hscroll, 'Callback', @update_plot, 'Value', 1)
     update_scroll(hscroll, n_points, numel(data))
 %     if n_points <= numel(data)
 %         set(hscroll, 'Min', 1, 'Max', 2, ...

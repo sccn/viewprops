@@ -386,89 +386,97 @@ end
 % Defining path for system
 eeglabpath = which('eeglab.m');
 pathtmp = fileparts(eeglabpath);
-meshdatapath = fullfile(pathtmp,'plugins','dipfit2.3','standard_BEM','standard_vol.mat');
-mripath      = fullfile(pathtmp,'plugins','dipfit2.3','standard_BEM','standard_mri.mat');
+dipfits = dir(fullfile(pathtmp, 'plugins', 'dipfit*'));
+[~, dipfit_order] = sort(cellfun(@(c) str2double(c(7:end)), {dipfits.name}), 'descend');
+for it_dipfit_version = dipfit_order
+    dipfit_folder = fullfile(pathtmp, 'plugins', dipfits(it_dipfit_version).name);
+    meshdatapath = fullfile(dipfit_folder, 'standard_BEM', 'standard_vol.mat');
+    mripath = fullfile(dipfit_folder, 'standard_BEM', 'standard_mri.mat');
 
-if ~typecomp && exist(meshdatapath,'file') == 2 && exist(mripath,'file') == 2
-    % dipplot
-    if isfield(EEG, 'dipfit') && ~isempty(EEG.dipfit)
-        try
-            rv = num2str(EEG.dipfit.model(chanorcomp).rv*100, '%.1f');
-        catch
-            rv = 'N/A';
-        end
-        dip_background = axes('Parent', fh, 'position', [0.41 0.1 0.1 0.1557*3+0.0109], ...
-            'units', 'normalized', 'XLim', [0 1], 'Ylim', [0 1]);
-        patch([0 0 1 1], [0 1 1 0], 'k', 'parent', dip_background)
-        axis(dip_background, 'off')
-        colors = {'g', 'm', 'y'};
-
-        % axial
-        ax(1) = axes('Parent', fh, 'position', [0.41 0.1109 0.1 0.1557], 'units', 'normalized');
-        axis equal off
-        dipplot(EEG.dipfit.model(chanorcomp), ...
-            'meshdata', meshdatapath, ...
-            'mri', mripath, ...
-            'normlen', 'on', 'coordformat', 'MNI', 'axistight', 'on', 'gui', 'off', 'view', [0 0 1], 'pointout', 'on');
-        temp = axes('Parent', fh, 'position', [0.41 0.1109 0.1 0.1557], 'units', 'normalized');
-        copyobj(allchild(ax(1)),temp);
-        delete(ax(1))
-        ax(1) = temp;
-        axis equal off
-        temp = get(ax(1),'children');
-        ind = find(strcmp('line', get(temp, 'type')));
-        for it = 1:length(ind)
-            if mod(it, 2)
-                set(temp(ind(it)), 'markersize', 15, 'color', colors{ceil(it / 2)})
-            else
-                set(temp(ind(it)), 'linewidth', 2, 'color', colors{ceil(it / 2)})
+    if ~typecomp && exist(meshdatapath,'file') == 2 && exist(mripath,'file') == 2
+        % dipplot
+        if isfield(EEG, 'dipfit') && ~isempty(EEG.dipfit)
+            try
+                rv = num2str(EEG.dipfit.model(chanorcomp).rv*100, '%.1f');
+            catch
+                rv = 'N/A';
             end
-        end
+            dip_background = axes('Parent', fh, 'position', [0.41 0.1 0.1 0.1557*3+0.0109], ...
+                'units', 'normalized', 'XLim', [0 1], 'Ylim', [0 1]);
+            patch([0 0 1 1], [0 1 1 0], 'k', 'parent', dip_background)
+            axis(dip_background, 'off')
+            colors = {'g', 'm', 'y'};
 
-        % coronal
-        ax(2) = axes('Parent', fh, 'position', [0.41 0.2666 0.1 0.1557], 'units', 'normalized');
-        axis equal off
-        copyobj(allchild(ax(1)),ax(2));
-        view([0 -1 0])
-        axis equal off
-        temp = get(ax(2),'children');
-        ind = find(strcmp('line', get(temp, 'type')));
-        for it = 1:length(ind)
-            if mod(it, 2)
-                set(temp(ind(it)), 'markersize', 15, 'color', colors{ceil(it / 2)})
-            else
-                set(temp(ind(it)), 'linewidth', 2, 'color', colors{ceil(it / 2)})
+            % axial
+            ax(1) = axes('Parent', fh, 'position', [0.41 0.1109 0.1 0.1557], 'units', 'normalized');
+            axis equal off
+            dipplot(EEG.dipfit.model(chanorcomp), ...
+                'meshdata', meshdatapath, ...
+                'mri', mripath, ...
+                'normlen', 'on', 'coordformat', 'MNI', 'axistight', 'on', 'gui', 'off', 'view', [0 0 1], 'pointout', 'on');
+            temp = axes('Parent', fh, 'position', [0.41 0.1109 0.1 0.1557], 'units', 'normalized');
+            copyobj(allchild(ax(1)),temp);
+            delete(ax(1))
+            ax(1) = temp;
+            axis equal off
+            temp = get(ax(1),'children');
+            ind = find(strcmp('line', get(temp, 'type')));
+            for it = 1:length(ind)
+                if mod(it, 2)
+                    set(temp(ind(it)), 'markersize', 15, 'color', colors{ceil(it / 2)})
+                else
+                    set(temp(ind(it)), 'linewidth', 2, 'color', colors{ceil(it / 2)})
+                end
             end
-        end
 
-        % sagital
-        ax(3) = axes('Parent', fh, 'position', [0.41 0.4223 0.1 0.1557], 'units', 'normalized');
-        axis equal off
-        copyobj(allchild(ax(1)),ax(3));
-        view([1 0 0])
-        axis equal off
-        temp = get(ax(3),'children');
-        ind = find(strcmp('line', get(temp, 'type')));
-        for it = 1:length(ind)
-            if mod(it, 2)
-                set(temp(ind(it)), 'markersize', 15, 'color', colors{ceil(it / 2)})
-            else
-                set(temp(ind(it)), 'linewidth', 2, 'color', colors{ceil(it / 2)})
+            % coronal
+            ax(2) = axes('Parent', fh, 'position', [0.41 0.2666 0.1 0.1557], 'units', 'normalized');
+            axis equal off
+            copyobj(allchild(ax(1)),ax(2));
+            view([0 -1 0])
+            axis equal off
+            temp = get(ax(2),'children');
+            ind = find(strcmp('line', get(temp, 'type')));
+            for it = 1:length(ind)
+                if mod(it, 2)
+                    set(temp(ind(it)), 'markersize', 15, 'color', colors{ceil(it / 2)})
+                else
+                    set(temp(ind(it)), 'linewidth', 2, 'color', colors{ceil(it / 2)})
+                end
             end
-        end
 
-        % dipole text
-        dip_title = title(dip_background, 'Dipole Position', 'FontWeight', 'Normal');
-        set(dip_title,'FontSize',14);
-        set(fh, 'CurrentAxes', ax(1))
-        if size(EEG.dipfit.model(chanorcomp).momxyz, 1) == 2
-            dmr = norm(EEG.dipfit.model(chanorcomp).momxyz(1,:)) ...
-                / norm(EEG.dipfit.model(chanorcomp).momxyz(2,:));
-            if dmr<1
-                dmr = 1/dmr; end
-            text(-50,-173,{['RV: ' rv '%']; ['DMR:' num2str(dmr,'%.1f')]})
-        else
-            text(-50,-163,['RV: ' rv '%'])
+            % sagital
+            ax(3) = axes('Parent', fh, 'position', [0.41 0.4223 0.1 0.1557], 'units', 'normalized');
+            axis equal off
+            copyobj(allchild(ax(1)),ax(3));
+            view([1 0 0])
+            axis equal off
+            temp = get(ax(3),'children');
+            ind = find(strcmp('line', get(temp, 'type')));
+            for it = 1:length(ind)
+                if mod(it, 2)
+                    set(temp(ind(it)), 'markersize', 15, 'color', colors{ceil(it / 2)})
+                else
+                    set(temp(ind(it)), 'linewidth', 2, 'color', colors{ceil(it / 2)})
+                end
+            end
+
+            % dipole text
+            dip_title = title(dip_background, 'Dipole Position', 'FontWeight', 'Normal');
+            set(dip_title,'FontSize',14);
+            set(fh, 'CurrentAxes', ax(1))
+            if size(EEG.dipfit.model(chanorcomp).momxyz, 1) == 2
+                dmr = norm(EEG.dipfit.model(chanorcomp).momxyz(1,:)) ...
+                    / norm(EEG.dipfit.model(chanorcomp).momxyz(2,:));
+                if dmr<1
+                    dmr = 1/dmr; end
+                text(-50,-173,{['RV: ' rv '%']; ['DMR:' num2str(dmr,'%.1f')]})
+            else
+                text(-50,-163,['RV: ' rv '%'])
+            end
+            
+            % exit loop over dipfit versions
+            break
         end
     end
 end
