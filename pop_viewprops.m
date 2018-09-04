@@ -138,7 +138,11 @@ if ~exist('fig','var')
 		   'numbertitle', 'off', 'color', BACKCOLOR);
 	set(gcf,'MenuBar', 'none');
 	pos = get(gcf,'Position');
-	set(gcf,'Position', [pos(1) 20 800/7*column 600/5*rows]);
+    if ~typecomp && isfield(EEG.etc, 'ic_classification')
+    	set(gcf,'Position', [pos(1) 20 800/7*column 600/5*rows*1.2]);
+    else
+    	set(gcf,'Position', [pos(1) 20 800/7*column 600/5*rows]);
+    end
     incx = 120;
     incy = 110;
     sizewx = 100/column;
@@ -213,10 +217,10 @@ for ri = chanorcomp
                         warning(['The number of ICs do not match the number of IC classifications. This will result in incorrectly plotted labels. Please rerun ' classifier_name])
                     end
                     [prob, classind] = max(EEG.etc.ic_classification.(classifier_name).classifications(ri, :));
-                    t = title(sprintf('%s :       %.1f%%', ...
+                    t = title(sprintf('%s : %.1f%%', ...
                         EEG.etc.ic_classification.(classifier_name).classes{classind}, ...
                         prob*100));
-                    set(t, 'Position', get(t, 'Position') .* [1 -1 1])
+                    set(t, 'Position', get(t, 'Position') .* [1 -1.2 1])
                 end
             end
         end
