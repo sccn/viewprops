@@ -373,8 +373,13 @@ try
     end
 	set(get(hfreq, 'ylabel'), 'string', 'Power 10*log_{10}(uV^2/Hz)', 'fontsize', 14); 
 	set(get(hfreq, 'xlabel'), 'string', 'Frequency (Hz)', 'fontsize', 14, 'fontweight', 'normal'); 
-	set(hfreq, 'fontsize', 14, 'fontweight', 'normal'); 
-    axis on tight;
+	set(hfreq, 'fontsize', 14, 'fontweight', 'normal');
+    xlims = xlim;
+    xdata = get(get(hfreq, 'children'), 'xdata');
+    ydata = get(get(hfreq, 'children'), 'ydata');
+    ind = xdata >= xlims(1) & xdata <= xlims(2);
+    axis on;
+    axis([xlims min(ydata(ind)) max(ydata(ind))])
     box on;
     grid on;
 catch e
