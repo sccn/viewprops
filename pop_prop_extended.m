@@ -375,8 +375,9 @@ try
 	set(get(hfreq, 'xlabel'), 'string', 'Frequency (Hz)', 'fontsize', 14, 'fontweight', 'normal'); 
 	set(hfreq, 'fontsize', 14, 'fontweight', 'normal');
     xlims = xlim;
-    xdata = get(get(hfreq, 'children'), 'xdata');
-    ydata = get(get(hfreq, 'children'), 'ydata');
+    hfreqline = findobj(hfreq, 'type', 'line');
+    xdata = get(hfreqline, 'xdata');
+    ydata = get(hfreqline, 'ydata');
     ind = xdata >= xlims(1) & xdata <= xlims(2);
     axis on;
     axis([xlims min(ydata(ind)) max(ydata(ind))])
