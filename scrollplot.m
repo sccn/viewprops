@@ -1,4 +1,4 @@
-function [ haxis ] = scroll(times, data, t_window, events, hparent, haxis, hscroll)
+function [ haxis ] = scrollplot(times, data, t_window, events, hparent, haxis, hscroll)
 %SCROLL Plot EEG channel or component activity with events and scrollbar.
 %   Creates a 1-dimensional scrolling plot that can incorporate EEGLAB
 %   events.
@@ -18,6 +18,8 @@ function [ haxis ] = scroll(times, data, t_window, events, hparent, haxis, hscro
 % Created by Luca Pion-Tonachini 
 
 % configure axis
+if ~exist('hparent', 'var') || isempty(hparent)
+    haxis = figure; end
 if ~exist('haxis', 'var') || isempty(haxis)
     haxis = axes('parent', hparent); end
 
@@ -43,7 +45,7 @@ else
 end
 
 % examine events
-if isempty(events)
+if ~exist('events', 'var') || isempty(events)
     has_events = false;
 else
     has_events = true;
@@ -71,7 +73,8 @@ if ~exist('hscroll', 'var') || isempty(hscroll)
     apos = get(haxis, 'Position');
     hscroll = uicontrol('Parent', hparent, 'Style', 'Slider', ...
         'Min', 1, 'Max', numel(data) - n_points + 1, 'Value', 1, ...
-        'SliderStep', double([round(n_points/10), n_points] / numel(data)), 'Units', 'Normalized', ...
+        'SliderStep', double([round(n_points/10), n_points] / numel(data)), ...
+        'Units', 'Normalized', ...
         'Position', [apos(1), apos(2) - 0.1, apos(3), 0.05], ...
         'Callback', @update_plot);
 else
