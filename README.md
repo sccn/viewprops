@@ -8,31 +8,31 @@ If you do not have Viewprops installed, install it through the EEGLAB plug-in ma
 
 ### Graphical Usage
 Once you finish installing Viewprops, of if you already have it installed, you need to load your EEG dataset. With your dataset loaded, open viewprops using the EEGLAB window by clicking on "Plot"->"View extended [channel/component] properties". A new window, shown to the right, will appear allowing you specify some settings:
-![](Viewprops_menu)
-![](Viewprops_settings)
+![](Viewprops_menu.png)
+![](Viewprops_settings.png)
 
-**\[Channel/Component\] indices to plot **
+**\[Channel/Component\] indices to plot**
 
 Array of numbers indicating which channels or components to plot.
 
-**Spectral options **
+**Spectral options**
 
 Cell array of key/value pairs which will be passed on to spectopo().
 
-**Erpimage options **
+**Erpimage options**
 
 Cell array of key/value pairs which will be passed on to erpimage().
-**Draw events over scrolling \[channel/component\] activity **
+**Draw events over scrolling \[channel/component\] activity**
 
 A checkbox indicating whether or not to overlay event times and types on top of the scrolling \[channel/component\] activity.
 
-**IC classifier [component properties only] **
+**IC classifier [component properties only]**
 
 A drop-down menu listing the available IC classifications. The chosen classifier's IC classification will be plotted.
 
 If you're happy with the settings, click the button labeled "Ok" to plot the grid of channels or components specified. Each channel or component is represented in the grid by a scalp topography with a button above it and, in the case of components with classifications available, the most likely IC category. Clicking on the button will open the extended properties viewer show in the picture at the top of this article.
 
-![](Pop_viewprops)
+![](Pop_viewprops.png)
 
 ### Command-line Usage
 Assuming you have stored your ICA-decomposed EEG dataset in the variable EEG, you can open Viewprops' grid window settings by entering the following into MATLAB's command window:
