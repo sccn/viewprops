@@ -8,6 +8,7 @@ If you do not have Viewprops installed, install it through the EEGLAB plug-in ma
 
 ### Graphical Usage
 Once you finish installing Viewprops, of if you already have it installed, you need to load your EEG dataset. With your dataset loaded, open viewprops using the EEGLAB window by clicking on "Plot"->"View extended [channel/component] properties". A new window, shown to the right, will appear allowing you specify some settings:
+
 ![](Viewprops_menu.png)
 ![](Viewprops_settings.png)
 
@@ -22,6 +23,7 @@ Cell array of key/value pairs which will be passed on to spectopo().
 **Erpimage options**
 
 Cell array of key/value pairs which will be passed on to erpimage().
+
 **Draw events over scrolling \[channel/component\] activity**
 
 A checkbox indicating whether or not to overlay event times and types on top of the scrolling \[channel/component\] activity.
